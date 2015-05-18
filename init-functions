@@ -303,7 +303,29 @@ status_of_proc() {
   fi
   status=${?}
   pids="${pids% }"
+  # not finished yet
 }
+
+# log_success_msg()
+log_success_msg() {
+  :
+}
+
+# log_failure_msg()
+log_failure_msg() {
+  :
+}
+
+# log_warning_msg()
+log_warning_msg() {
+  :
+}
+
+# log_info_msg()
+log_info_msg() {
+  :
+}
+
 # check_signal() [ -{SIGNAL} | {SIGNAL} ] (not defined by LSB)
 # Exit status
 # - 0: Valid and term signal
