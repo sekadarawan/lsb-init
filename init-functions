@@ -63,11 +63,10 @@ start_daemon() {
     # Get the list of the program's pids
     if [ -z "${pidfile}" ]; then
       pids="$( pidofproc ${1} )"
-      status=${?}
     else
       pids="$( pidofproc -p ${pidfile} ${1} )"
-      status=${?}
     fi
+    status=${?}
 
     case ${status} in
       0)
@@ -137,11 +136,10 @@ killproc() {
 
   if [ -z "${pidfile}" ]; then
     pids="$( pidofproc ${1} )"
-    status=${?}
   else
     pids="$( pidofproc -p ${pidfile} ${1} )"
-    status=${?}
   fi
+  status=${?}
 
   case ${status} in
     0)
