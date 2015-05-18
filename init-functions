@@ -35,6 +35,8 @@
 # - 5: Program not installed
 start_daemon() {
   local force nice pidfile pids status OPTIND
+  force=""
+  nice=0
 
   OPTIND=1
   while getopts fn:p: opt; do
