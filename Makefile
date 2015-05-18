@@ -22,4 +22,37 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
+
+ETCDIR=${DESTDIR}/etc
+LIBDIR=${DESTDIR}/lib
+LSBDIR=${LIBDIR}/lsb
+HELPERDIR=${LSBDIR}/init-functions.d
+MODE=754
+DIRMODE=755
+
+all: install-files
+
+install: all
+
+install-dirs:
+	install -dm ${DIRMODE} ${ETCDIR}
+	install -dm ${DIRMODE} ${LIBDIR}
+	install -dm ${DIRMODE} ${LSBDIR}
+	install -dm ${DIRMODE} ${HELPERDIR}
+
+install-files: install-dirs
+	install -m ${MODE} init-functions ${LSBDIR}/
+	install -m ${MODE} 10-printlog.sh ${HELPERDIR}/
+
+uninstall: uninstall-dirs
+
+uninstall-files:
+	rm -f ${HELPERDIR}/10-printlog.sh
+	rm -f ${LSBDIR}/init-functions
+
+uninstall-dirs: uninstall-files
+	rmdir ${HELPERDIR}
+	rmdir ${LSBDIR}
+
+.PHONY: all install install-dirs install-files uninstall uninstall-files uninstall-dirs
 # vim: ft=make:ts=4:sw=4:sts=4:syn=make:noet
