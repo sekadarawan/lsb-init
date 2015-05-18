@@ -1,0 +1,3 @@
+h1. lsb-init
+
+This package contains helper functions as described by LSB Core generic section 20.8.

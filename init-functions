@@ -1,0 +1,260 @@
+# init-functions: This file is part of asboot's lsb-init package
+#
+# The MIT License (MIT)
+#
+# Copyright (c) 2015 Sekadar Awan
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+
+#umask 022
+#PATH=/bin:/usr/bin:/sbin:/usr/sbin
+#export PATH
+
+# start_daemon() [-f] [-n nicelevel] [-p pidfile] pathname [args ...]
+# Exit status:
+# - 0: Success
+# - 1: Generic or unspecified error
+# - 2: Invalid or excessive arguments
+# - 5: Program not installed
+start_daemon() {
+  local force nice pidfile pids status OPTIND
+
+  OPTIND=1
+  while getopts fn:p: opt; do
+    case "${opt}" in
+      f)
+        force="force"
+        ;;
+      n)
+        nice=${OPTARG}
+        ;;
+      p)
+        pidfile="${OPTARG}"
+        ;;
+    esac
+  done
+  shift $((${OPTIND} - 1))
+
+  if [ ! -e "${1}" ]; then
+    # Program not found
+    return 5
+  fi
+
+  if [ -z "${force}" ]; then
+    # Get the list of the program's pids
+    if [ -z "${pidfile}" ]; then
+      pids="$( pidofproc ${1} )"
+      status=${?}
+    else
+      pids="$( pidofproc -p ${pidfile} ${1} )"
+      status=${?}
+    fi
+
+    case ${status} in
+      0)
+        # Program is already running
+        return 0
+        ;;
+      1)
+        # Program is not running, but PID file exists
+        rm -f "${pidfile}"
+        ;;
+      3)
+        # Program is not running, do nothing
+        ;;
+      *)
+        # Anything else
+        return 1
+        ;;
+    esac
+  fi
+
+  # Run the progam
+  nice -n ${nice} "${@}"
+}
+
+# killproc() [-p pidfile] pathname [signal]
+# Exit status:
+# - 0: Success
+# - 1: Generic or unspecified error
+# - 2: Invalid or excessive arguments
+# - 5: Program not installed
+# - 7: Program is not running and signal was specified
+killproc() {
+  local pidfile signal fallback specified sigstatus
+  local base procdead pids status OPTIND
+  signal="-TERM"
+  fallback="-KILL"
+  specified=""
+
+  OPTIND=1
+  while getopts p: opt; do
+    case "${opt}" in
+      p)
+        pidfile="${OPTARG}"
+        ;;
+    esac
+  done
+  shift $((${OPTIND} - 1))
+
+  if [ ! -e "${1}" ]; then
+    # Program is not installed
+    return 5
+  fi
+
+  if [ -n "${2}" ]; then
+    signal="${2}"
+    specified="specified"
+  fi
+
+  check_signal "${signal}"
+  sigstatus=${?}
+  if [ ${sigstatus} -eq 2 ]; then
+    # Is not valid signal
+    return 2
+  fi
+
+  if [ -z "${pidfile}" ]; then
+    pids="$( pidofproc ${1} )"
+    status=${?}
+  else
+    pids="$( pidofproc -p ${pidfile} ${1} )"
+    status=${?}
+  fi
+
+  case ${status} in
+    0)
+      # Program is running
+      ;;
+    1)
+      # Program is not running but PID file exists
+      rm -f "${pidfile}"
+      if [ -z "${specified}" ]; then
+        return 0
+      else
+        return 7
+      fi
+      ;;
+    3)
+      # Program is not running
+      if [ -z "${specified}" ]; then
+        return 0
+      else
+        return 7
+      fi
+      ;;
+    *)
+      # Anything else
+      return 1
+      ;;
+  esac
+
+  # Signal is term signal
+  if [ ${sigstatus} -eq 0 ]; then
+}
+
+# pidofproc() [-p pidfile] pathname
+# Exit status:
+# - 0: Program is running
+# - 1: Program is not running, pid file exists
+# - 3: Program is not running, no pid file exists
+# - 4: Unknown error
+pidofproc() {
+  local pidfile specified pids pidlist base OPTIND
+  pidfile=
+  specified=""
+
+  OPTIND=1
+  while getopts p: opt; do
+    case "${opt}" in
+      p)
+        pidfile="${OPTARG}"
+        specified="specified"
+        ;;
+    esac
+  done
+  shift $((${OPTIND} - 1))
+
+  if [ ${#} -ne 1 ]; then
+    # Unknown arguments
+    return 4
+  fi
+
+  if [ -z "${pidfile}" ]; then
+    base="${1##*/}"
+    pidfile="/var/run/${base}.pid"
+  fi
+
+  if [ -e "${pidfile}" ]; then
+    pids="$( head -n1 ${pidfile} )"
+
+    if [ -z "${pids}" ]; then
+      # Program is not running, PID file exists
+      return 1
+    fi
+  else
+    if [ -n "${specified}" ]; then
+      # PID file given but not found
+      return 3
+    else
+      # Fallback using pidof
+      pids="$( pidof -o %PPID -x ${1} )"
+
+      if [ -z "${pids}" ]; then
+        # Program is not running, no PID file given
+        return 3
+      fi
+    fi
+  fi
+
+  for pid in "${pids}"; do
+    if kill -0 ${pid} 2> /dev/null || ps ${pid} > /dev/null 2>&1; then
+      pidlist="${pidlist} ${pid}"
+    fi
+  done
+
+  echo "${pidlist# }"
+  return 0
+}
+
+# check_signal() [ -{SIGNAL} | {SIGNAL} ] (not defined by LSB)
+# Exit status
+# - 0: Valid and term signal
+# - 1: Valid and non term signal
+# - 2: Invalid signal
+check_signal() {
+  local termsigs signals
+
+  termsigs="-ALRM -INT -KILL -TERM -PWR -STOP -ABRT -QUIT -2 -3 -6 -9 -14 -15"
+
+  signals="-HUP -PIPE -POLL -PROF -USR1 -USR2"
+  signals="${signals} -VTALRM -STKFLT -WINCH -CHLD -URG -TSTP -TTIN"
+  signals="${signals} -TTOU -CONT -FPE -ILL -SEGV -TRAP"
+  signals="${signals} -SYS -EMT -BUS -XCPU -XFSZ -0 -1 -4 -5 -8 -11 -13"
+
+  if echo "${termsigs}" | grep -- "${1}" > /dev/null 2>&1; then
+    return 0
+  elif echo "${signals}" | grep -- "${1}" > /dev/null 2>&1; then
+    return 1
+  else
+    return 2
+  fi
+}
+# vim: ft=sh:ts=2:sw=2:sts=2:syn=sh:et
