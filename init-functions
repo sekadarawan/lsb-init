@@ -99,10 +99,11 @@ start_daemon() {
 # - 7: Program is not running and signal was specified
 killproc() {
   local pidfile signal fallback specified sigstatus
-  local base procdead pids status OPTIND
+  local base procdead pids delay status OPTIND
   signal="-TERM"
   fallback="-KILL"
   specified=""
+  delay=30
 
   OPTIND=1
   while getopts p: opt; do
@@ -168,6 +169,48 @@ killproc() {
 
   # Signal is term signal
   if [ ${sigstatus} -eq 0 ]; then
+    if [ "${pids}" != "" ]; then
+      for pid in "${pids}"; do
+        if kill -0 ${pid} 2> /dev/null; then
+          kill "${signal}" ${pid} 2> /dev/null
+
+          while [ ${delay} -ne 0 ]; do
+            kill -0 ${pid} 2> /dev/null || procdead=1
+            if [ ${procdead} -eq 1 ]; then break; fi
+            sleep 0.1
+            delay=$((${delay} -1))
+          done
+
+          if [ ${procdead} -ne 1 ]; then
+            # If proccess is not dead
+            kill "${fallback}" ${pid} 2> /dev/null
+            sleep 1
+
+            # Check, if it is not dead return 1
+            kill -0 ${pid} 2> /dev/null && return 1
+          fi
+
+        else
+          # Proccess is dead
+          continue
+        fi
+      done
+    fi
+
+    if [ -z "${pidfile}" ]; then
+      base="${1##*/}"
+      if [ -e "/var/run/${base}.pid" ]; then
+        rm -f "/var/run/${base}.pid" 2> /dev/null
+      fi
+    else
+      if [ -e "${pidfile}" ]; then rm -f "${pidfile}" 2> /dev/null; fi
+    fi
+  else
+    for pid in "${pids}"; do
+      kill "${signal}" ${pid} 2> /dev/null
+      if [ ${?} -ne 0 ]; then return 1; fi
+    done
+  fi
 }
 
 # pidofproc() [-p pidfile] pathname
