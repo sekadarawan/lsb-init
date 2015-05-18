@@ -37,6 +37,7 @@ start_daemon() {
   local force nice pidfile pids status OPTIND
   force=""
   nice=0
+  pidfile=
 
   OPTIND=1
   while getopts fn:p: opt; do
@@ -101,6 +102,7 @@ start_daemon() {
 killproc() {
   local pidfile signal fallback specified sigstatus
   local base procdead pids delay status OPTIND
+  pidfile=
   signal="-TERM"
   fallback="-KILL"
   specified=""
@@ -285,6 +287,7 @@ pidofproc() {
 # - 4: Unknown error
 status_of_proc() {
   local pidfile pids status OPTIND
+  pidfile=
 
   OPTIND=1
   while getopts p: opt; do
