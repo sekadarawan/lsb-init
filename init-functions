@@ -125,6 +125,7 @@ killproc() {
   if [ -n "${2}" ]; then
     signal="${2}"
     specified="specified"
+    fallback=""
   fi
 
   check_signal "${signal}"
@@ -183,7 +184,7 @@ killproc() {
             delay=$((${delay} -1))
           done
 
-          if [ ${procdead} -ne 1 ]; then
+          if [ ${procdead} -ne 1 ] && [ "${fallback}" != ""]; then
             # If proccess is not dead
             kill "${fallback}" ${pid} 2> /dev/null
             sleep 1
@@ -279,6 +280,32 @@ pidofproc() {
   return 0
 }
 
+# status_of_proc() [-p pidfile] pathname (not defined by LSB)
+# Exit status
+# - 0: Program is running
+# - 1: Program is not running
+# - 4: Unknown error
+status_of_proc() {
+  local pidfile pids status OPTIND
+
+  OPTIND=1
+  while getopts p: opt; do
+    case "${opt}" in
+      p)
+        pidfile="${OPTARG}"
+        ;;
+    esac
+  done
+  shift $((${OPTIND} - 1))
+
+  if [ -n "${pidfile}" ]; then
+    pids="$( pidofproc -p ${pidfile} ${1} )"
+  else
+    pids="$( pidofproc ${1} )"
+  fi
+  status=${?}
+  pids="${pids% }"
+}
 # check_signal() [ -{SIGNAL} | {SIGNAL} ] (not defined by LSB)
 # Exit status
 # - 0: Valid and term signal
