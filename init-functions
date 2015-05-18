@@ -184,7 +184,7 @@ killproc() {
             delay=$((${delay} -1))
           done
 
-          if [ ${procdead} -ne 1 ] && [ "${fallback}" != ""]; then
+          if [ ${procdead} -ne 1 ] && [ "${fallback}" != "" ]; then
             # If proccess is not dead
             kill "${fallback}" ${pid} 2> /dev/null
             sleep 1
