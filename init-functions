@@ -200,6 +200,7 @@ killproc() {
       done
     fi
 
+    # Remove pid file, if exists
     if [ -z "${pidfile}" ]; then
       base="${1##*/}"
       if [ -e "/var/run/${base}.pid" ]; then
@@ -306,7 +307,19 @@ status_of_proc() {
   fi
   status=${?}
   pids="${pids% }"
-  # not finished yet
+
+  base="${1##*/}"
+
+  if [ ${status} -eq 0 ]; then
+    log_success_msg "${base} is running"
+    return ${status}
+  elif [ ${status} -eq 4 ]; then
+    log_failure_msg "failed to acces PID file of ${base}"
+    return ${status}
+  else
+    log_failure_msg "${base} is not running"
+    return 1
+  fi
 }
 
 # log_success_msg()
