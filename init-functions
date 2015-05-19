@@ -365,4 +365,18 @@ check_signal() {
     return 2
   fi
 }
+
+# is_true()
+# Exit status
+# true | false
+is_true() {
+  case "${1}" in
+    1|Y|y|YES|yes|T|t)
+      true
+      ;;
+    *)
+      false
+      ;;
+  esac
+}
 # vim: ft=sh:ts=2:sw=2:sts=2:syn=sh:et
