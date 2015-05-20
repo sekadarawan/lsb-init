@@ -342,46 +342,9 @@ log_info_msg() {
   :
 }
 
-# check_signal() [ -{SIGNAL} | {SIGNAL} ] (not defined by LSB)
-# Exit status
-# - 0: Valid and term signal
-# - 1: Valid and non term signal
-# - 2: Invalid signal
-check_signal() {
-  local termsigs signals
-
-  termsigs="-ALRM -INT -KILL -TERM -PWR -STOP -ABRT -QUIT -2 -3 -6 -9 -14 -15"
-
-  signals="-HUP -PIPE -POLL -PROF -USR1 -USR2"
-  signals="${signals} -VTALRM -STKFLT -WINCH -CHLD -URG -TSTP -TTIN"
-  signals="${signals} -TTOU -CONT -FPE -ILL -SEGV -TRAP"
-  signals="${signals} -SYS -EMT -BUS -XCPU -XFSZ -0 -1 -4 -5 -8 -11 -13"
-
-  if echo "${termsigs}" | grep -- "${1}" > /dev/null 2>&1; then
-    return 0
-  elif echo "${signals}" | grep -- "${1}" > /dev/null 2>&1; then
-    return 1
-  else
-    return 2
-  fi
-}
-
 # Source helper files
 for file in /lib/lsb/init-functions.d/*.sh; do
   . "${file}"
 done
 
-# is_true()
-# Exit status
-# true | false
-is_true() {
-  case "${1}" in
-    1|Y|y|YES|yes|T|t|TRUE|true)
-      true
-      ;;
-    *)
-      false
-      ;;
-  esac
-}
 # vim: ft=sh:ts=2:sw=2:sts=2:syn=sh:et
