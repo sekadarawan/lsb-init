@@ -366,12 +366,17 @@ check_signal() {
   fi
 }
 
+# Source helper files
+for file in /lib/lsb/init-functions.d/*.sh; do
+  . "${file}"
+done
+
 # is_true()
 # Exit status
 # true | false
 is_true() {
   case "${1}" in
-    1|Y|y|YES|yes|T|t)
+    1|Y|y|YES|yes|T|t|TRUE|true)
       true
       ;;
     *)
