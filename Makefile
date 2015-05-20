@@ -42,12 +42,14 @@ install-dirs:
 
 install-files: install-dirs
 	install -m ${MODE} init-functions ${LSBDIR}/
+	install -m ${MODE} 05-util.sh ${HELPERDIR}/
 	install -m ${MODE} 10-printlog.sh ${HELPERDIR}/
 
 uninstall: uninstall-dirs
 
 uninstall-files:
 	rm -f ${HELPERDIR}/10-printlog.sh
+	rm -f ${HELPERDIR}/05-util.sh
 	rm -f ${LSBDIR}/init-functions
 
 uninstall-dirs: uninstall-files
