@@ -343,8 +343,8 @@ log_info_msg() {
 }
 
 # Source helper files
-for file in /lib/lsb/init-functions.d/*.sh; do
-  . "${file}"
+for f in /lib/lsb/init-functions.d/*.sh; do
+  . "${f}"
 done
 
 # vim: ft=sh:ts=2:sw=2:sts=2:syn=sh:et
