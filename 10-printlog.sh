@@ -22,4 +22,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
+
+TPUT="$( which tput )"
+COLUMNS="$( ${TPUT} cols )"
+if [ ${COLUMNS} -eq 0 ]; then
+  COLUMNS=80
+fi
+
+BOLD="$( ${TPUT} bold )"
+NORMAL="$( ${TPUT} sgr0 )"
+SUCCESS="${BOLD}$( ${TPUT} setaf 2 )"
+WARNING="${BOLD}$( ${TPUT} setaf 3 )"
+FAILURE="${BOLD}$( ${TPUT} setaf 1 )"
+INFO="${BOLD}$( ${TPUT} setaf 6 )"
+BRACKET="${BOLD}$( ${TPUT} setaf 4 )"
+CURS_ZERO="$( ${TPUT} cuu 0 )"
+CURS_UP="$( ${TPUT} cuu1 )${CURS_ZERO}"
 # vim: ft=sh:ts=2:sw=2:sts=2:syn=sh:et
